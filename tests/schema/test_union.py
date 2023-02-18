@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from textwrap import dedent
 from typing import Generic, List, Optional, TypeVar, Union
 from typing_extensions import Annotated
+from graphql import GraphQLResolveInfo, GraphQLUnionType
 
 import pytest
 
@@ -662,3 +663,40 @@ def test_error_with_invalid_annotated_type():
         union: Union[Something, AnnotatedInt]
 
     strawberry.Schema(query=Query)
+
+
+def test_union_get_type_resolver():
+    """
+    Verify that the type resolver is correctly returned
+    """
+
+    @strawberry.type
+    class A:
+        a: str
+
+    @strawberry.type
+    class B:
+        b: str
+
+    type_map = {
+        "A": A,
+        "B": B,
+    }
+
+    mockInfo = GraphQLResolveInfo(
+        field_name="test",
+        field_nodes=[],
+        return_type=GraphQLUnionType("MyUnion", [A, B]),
+        context=None,
+        is_awaitable=False,
+        fragments=None,
+        parent_type=None,
+        path=None,
+        root_value=None,
+        operation=None,
+        schema=None,
+        variable_values=None,
+    )
+    mockType = GraphQLUnionType(ast_node=None, name="MyUnion", types=[A, B])
+
+    MyUnion = strawberry.union("MyUnion", types=(A, B))
